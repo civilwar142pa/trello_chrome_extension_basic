@@ -4,9 +4,9 @@
 
 * Basic Trello extension for Google Chrome
 
-## v1.0 Initial Release
+# v1.0 Initial Release
 
-# Features
+## Features
 
 * Connect with Trello through personal API key
 * Visually see all Trello boards, lists, and cards
@@ -25,12 +25,15 @@
 1. Go to https://trello.com/power-ups/admin and create a new integration to get an API Key.
 2. Click the extension icon and paste your API Key.
 
-## Roadmap
+
+
+# Roadmap
 
 * Visual improvements
 * Add/delete boards functionality
 * Add/edit card details functionality
 * Custom extension icon
+
 
 ## Have problems?
 
