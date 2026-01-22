@@ -1,23 +1,31 @@
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('Popup: Minimal script loaded and DOMContentLoaded fired!');
+  document.body.style.backgroundColor = 'lightblue'; // Visual cue
   const apiKeyInput = document.getElementById('apiKeyInput');
   const saveBtn = document.getElementById('saveKeyBtn');
   const status = document.getElementById('status');
 
-  // Load existing key
-  chrome.storage.local.get(['trello_api_key'], (result) => {
-    if (result.trello_api_key) {
-      apiKeyInput.value = result.trello_api_key;
-    }
-  });
+  if (apiKeyInput) {
+    console.log('Popup: apiKeyInput element found.');
+  } else {
+    console.error('Popup: apiKeyInput element NOT found!');
+  }
 
-  // Save key
-  saveBtn.addEventListener('click', () => {
-    const key = apiKeyInput.value.trim();
-    chrome.runtime.sendMessage({ action: 'save-api-key', key }, (response) => {
-      if (response && response.success) {
-        status.textContent = 'API Key Saved!';
-        setTimeout(() => status.textContent = '', 2000);
+  if (saveBtn) {
+    console.log('Popup: saveBtn element found.');
+    saveBtn.addEventListener('click', () => {
+      console.log('Popup: Minimal Save button clicked!');
+      if (status) {
+        status.textContent = 'Button clicked!';
       }
     });
-  });
+  } else {
+    console.error('Popup: saveBtn element NOT found!');
+  }
+
+  if (status) {
+    console.log('Popup: status element found.');
+  } else {
+    console.error('Popup: status element NOT found!');
+  }
 });
