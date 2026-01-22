@@ -1,41 +1,73 @@
-# Trello Chrome Extension
+# React + TypeScript + Vite
 
-## About
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-* Basic Trello extension for Google Chrome
+Currently, two official plugins are available:
 
-# v1.0 Initial Release
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## Features
+## React Compiler
 
-* Connect with Trello through personal API key
-* Visually see all Trello boards, lists, and cards
-* Add (titles only), delete, and move cards between lists
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Installation Instructions
+## Expanding the ESLint configuration
 
-1. Download **trello-extension-v1.0.zip** below.
-2. Unzip the file.
-3. Open Chrome and go to `chrome://extensions`.
-4. Enable **"Developer mode"** (top right).
-5. Click **"Load unpacked"** and select the unzipped folder.
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-## Setup
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
-1. Go to https://trello.com/power-ups/admin and create a new integration to get an API Key.
-2. Click the extension icon and paste your API Key.
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
 
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
 
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-# Roadmap
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-* Visual improvements
-* Add/delete boards functionality
-* Add/edit card details functionality
-* Custom extension icon
-
-
-## Have problems?
-
-* Please post a new issue on GitHub with what issue you're having and the version of Chrome you're using
-* Thanks!
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```

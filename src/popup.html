@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { width: 300px; padding: 15px; font-family: sans-serif; }
+    input { width: 100%; margin-bottom: 10px; padding: 5px; box-sizing: border-box; }
+    button { width: 100%; padding: 8px; background: #0079bf; color: white; border: none; cursor: pointer; }
+    button:hover { background: #026aa7; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h3>Trello Settings</h3>
+  <input type="text" id="apiKeyInput" placeholder="Enter Trello API Key" />
+  <button id="saveKeyBtn">Save Key</button>
+  <p id="status" style="color: green; margin-top: 10px;"></p>
+  <script src="popup.js"></script>
+</body>
+</html>

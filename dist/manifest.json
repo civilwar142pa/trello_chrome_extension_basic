@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "Trello React Booster",
+  "version": "1.0.0",
+  "action": {
+    "default_popup": "index.html"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "identity"
+  ],
+  "host_permissions": [
+    "https://trello.com/*"
+  ],
+  "content_scripts": [
+    {
+      "js": [
+        "assets/content.js-BQkop78M.js"
+      ],
+      "matches": [
+        "https://trello.com/*"
+      ]
+    }
+  ],
+  "background": {
+    "service_worker": "service-worker-loader.js",
+    "type": "module"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y",
+        "mac": "Command+Shift+Y"
+      },
+      "description": "Open Trello Booster"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "matches": [
+        "https://trello.com/*"
+      ],
+      "resources": [
+        "assets/content.js-BQkop78M.js"
+      ],
+      "use_dynamic_url": false
+    }
+  ]
+}
