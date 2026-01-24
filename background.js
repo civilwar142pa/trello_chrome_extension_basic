@@ -12,6 +12,7 @@ const getApiKey = () => {
       if (result.trello_api_key) {
         resolve(result.trello_api_key);
       } else {
+        console.error('Background: Trello API Key not found in storage.');
         reject(new Error('Trello API Key not configured. Please set it in the extension settings.'));
       }
     });
@@ -22,8 +23,10 @@ const getApiKey = () => {
 const authenticateTrello = () => {
   return getApiKey().then((apiKey) => new Promise((resolve, reject) => {
     const redirectURL = chrome.identity.getRedirectURL();
+    console.log('Background: Generated Redirect URL:', redirectURL);
     const authURL = `https://trello.com/1/authorize?expiration=never&name=TrelloReactBooster&scope=read,write&response_type=token&key=${apiKey}&return_url=${encodeURIComponent(redirectURL)}`;
 
+    console.log('Background: Launching web auth flow with URL:', authURL);
     chrome.identity.launchWebAuthFlow(
       {
         url: authURL,
@@ -31,20 +34,29 @@ const authenticateTrello = () => {
       },
       (responseUrl) => {
         if (chrome.runtime.lastError || !responseUrl) {
-          reject(chrome.runtime.lastError);
+          const error = chrome.runtime.lastError ? chrome.runtime.lastError.message : 'Web auth flow completed without a response URL.';
+          console.error('Background: chrome.identity.launchWebAuthFlow error:', error);
+          reject(new Error(error));
           return;
         }
         // Extract token from URL hash
         const url = new URL(responseUrl);
         const params = new URLSearchParams(url.hash.substring(1)); // removes '#'
         const token = params.get('token');
-        
+
         if (token) {
-          chrome.storage.local.set({ trello_token: token }, () => {
-            resolve(token);
+          chrome.storage.local.set({ trello_token: token }, () => { //
+            if (chrome.runtime.lastError) {
+              console.error('Background: Error saving Trello token:', chrome.runtime.lastError.message);
+              reject(new Error(`Failed to save Trello token: ${chrome.runtime.lastError.message}`));
+            } else {
+              console.log('Background: Trello token saved successfully.');
+              resolve(token);
+            }
           });
         } else {
-          reject(new Error('No token found in response'));
+          console.error('Background: No token found in response URL:', responseUrl);
+          reject(new Error('No token found in response.'));
         }
       }
     );
@@ -55,10 +67,20 @@ const authenticateTrello = () => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('Background: Message received:', request);
   if (request.action === 'save-api-key') {
+    if (!request.key || typeof request.key !== 'string' || request.key.trim() === '') {
+      console.error('Background: Received save-api-key request but no valid key was provided.', request);
+      sendResponse({ success: false, error: 'No valid API key provided.' });
+      return true;
+    }
     console.log('Background: Saving API key to chrome.storage.local:', request.key);
     chrome.storage.local.set({ trello_api_key: request.key }, () => {
-      console.log('Background: API key saved to chrome.storage.local. Sending success response.');
-      sendResponse({ success: true });
+      if (chrome.runtime.lastError) {
+        console.error('Background: Error saving API key:', chrome.runtime.lastError.message);
+        sendResponse({ success: false, error: chrome.runtime.lastError.message });
+      } else {
+        console.log('Background: API key saved to chrome.storage.local. Sending success response.');
+        sendResponse({ success: true });
+      }
     });
     return true;
   } else if (request.action === 'authenticate') {

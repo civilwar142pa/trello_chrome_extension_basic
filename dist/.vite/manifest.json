@@ -6,7 +6,7 @@
     "isEntry": true
   },
   "src/background.js": {
-    "file": "assets/background-CnAsVRCH.js",
+    "file": "assets/background-C3OidHZf.js",
     "name": "background",
     "src": "src/background.js",
     "isEntry": true
@@ -15,6 +15,12 @@
     "file": "assets/content-BQkop78M.js",
     "name": "content",
     "src": "src/content.js",
+    "isEntry": true
+  },
+  "src/popup.html": {
+    "file": "assets/popup-CLNbcgxK.js",
+    "name": "popup",
+    "src": "src/popup.html",
     "isEntry": true
   }
 }

@@ -7,7 +7,8 @@
   },
   "permissions": ["storage", "activeTab", "identity"],
   "host_permissions": [
-    "https://trello.com/*"
+    "https://trello.com/*",
+    "https://api.trello.com/*"
   ],
   "content_scripts": [
     {

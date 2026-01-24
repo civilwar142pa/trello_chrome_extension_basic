@@ -1,0 +1,3 @@
+https://<your-extension-id>.chromiumapp.org/
+
+https://illlhcfambhkcmefpmnnhonmiadfknba.chromiumapp.org/
