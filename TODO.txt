@@ -1,0 +1,5 @@
+- Add label functionality
+- Add attachment functionality
+- Add checklist item functionality
+- Add visual improvements to edit card pop-up
+- Add visual confirmation of info saving
