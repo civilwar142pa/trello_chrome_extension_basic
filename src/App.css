@@ -11,7 +11,11 @@
   --secondary-text: #5e6c84;
   --delete-btn-color: #6b778c;
   --btn-bg: #0079bf;
+  --btn-hover-bg: #026aa7;
   --btn-text: #ffffff;
+  --label-text: #fff;
+  --label-shadow: 0 1px 1px rgba(0,0,0,0.3);
+  --back-btn-color: #5e6c84;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -28,7 +32,11 @@
     --secondary-text: #9fadbc;
     --delete-btn-color: #9fadbc;
     --btn-bg: #579dff;
+    --btn-hover-bg: #428be8;
     --btn-text: #1d2125;
+    --label-text: #fff;
+    --label-shadow: 0 1px 1px rgba(0,0,0,0.3);
+    --back-btn-color: #9fadbc;
   }
 }
 
@@ -139,4 +147,144 @@ body {
   display: block;
   overflow: hidden;
   cursor: pointer;
+}
+
+/* Card Detail View */
+#cardDetailContainer {
+    padding: 10px;
+    text-align: left;
+    max-height: 500px; /* Adjust as needed */
+    overflow-y: auto;
+}
+
+#cardDetailTitle {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    word-break: break-word;
+    color: var(--text-color);
+}
+
+#cardDetailDescription {
+    width: calc(100% - 20px);
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid var(--input-border);
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    resize: vertical;
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+.action-btn {
+    background-color: var(--btn-bg);
+    color: var(--btn-text);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 5px;
+    transition: background-color 0.2s ease;
+    width: auto; /* Override default button width */
+}
+
+.action-btn:hover {
+    background-color: var(--btn-hover-bg);
+}
+
+#cardDetailDueDate {
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    color: var(--text-color);
+}
+
+.labels-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.trello-label {
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    color: var(--label-text); /* Assuming labels are dark enough for white text */
+    text-shadow: var(--label-shadow);
+}
+
+.checklists-container {
+    margin-bottom: 10px;
+}
+
+.trello-checklist {
+    background-color: var(--list-bg);
+    border-radius: 5px;
+    padding: 8px;
+    margin-bottom: 8px;
+}
+
+.trello-checklist h4 {
+    margin: 0 0 5px 0;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+.trello-checklist li {
+    font-size: 0.85rem;
+    margin-bottom: 3px;
+    color: var(--text-color);
+}
+
+.comments-container {
+    margin-bottom: 10px;
+}
+
+.trello-comment {
+    background-color: var(--list-bg);
+    border-radius: 5px;
+    padding: 8px;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    color: var(--text-color);
+}
+
+.trello-comment small {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--secondary-text);
+    margin-top: 3px;
+}
+
+.add-comment-section {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+#newCommentInput {
+    width: calc(100% - 20px);
+    padding: 8px;
+    border: 1px solid var(--input-border);
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    color: var(--back-btn-color);
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 10px;
+    font-size: 1em;
+    width: auto;
+    text-align: left;
+}
+
+.back-btn:hover {
+    text-decoration: underline;
 }

@@ -9,8 +9,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const selectedBoardTitle = document.getElementById('selectedBoardTitle');
   const listsGrid = document.getElementById('listsGrid');
   const saveKeyBtn = document.getElementById('saveKeyBtn');
-  const statusElement = document.getElementById('status'); // Renamed from 'status' to 'statusElement' to avoid conflict
+  const statusElement = document.getElementById('status');
   const boardsGrid = document.getElementById('boardsGrid');
+
+  // New elements for card details
+  const cardDetailContainer = document.getElementById('cardDetailContainer');
+  const cardDetailTitle = document.getElementById('cardDetailTitle');
+  const cardDetailDescription = document.getElementById('cardDetailDescription');
+  const cardDetailDueDate = document.getElementById('cardDetailDueDate');
+  const cardDetailLabels = document.getElementById('cardDetailLabels');
+  const cardDetailChecklists = document.getElementById('cardDetailChecklists');
+  const cardDetailComments = document.getElementById('cardDetailComments');
+  const backToListsBtn = document.getElementById('backToListsBtn');
+  const editDescriptionBtn = document.getElementById('editDescriptionBtn');
+  const saveDescriptionBtn = document.getElementById('saveDescriptionBtn');
+  const newCommentInput = document.getElementById('newCommentInput');
+  const addCommentBtn = document.getElementById('addCommentBtn');
 
   // New elements for settings
   const settingsBtn = document.getElementById('settingsBtn');
@@ -41,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (apiKeySection) apiKeySection.style.display = 'block';
     if (trelloBoardsContainer) trelloBoardsContainer.style.display = 'none';
     if (trelloListsContainer) trelloListsContainer.style.display = 'none';
+    if (cardDetailContainer) cardDetailContainer.style.display = 'none';
     console.log('Popup: settingsContainer element:', settingsContainer); // diag log 
     if (settingsContainer) settingsContainer.style.display = 'block';
   };
@@ -53,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (apiKeySection) apiKeySection.style.display = 'none';
     if (trelloBoardsContainer) trelloBoardsContainer.style.display = 'block';
+    if (cardDetailContainer) cardDetailContainer.style.display = 'none';
     if (trelloListsContainer) trelloListsContainer.style.display = 'none';
     if (settingsContainer) settingsContainer.style.display = 'none'; // Explicitly hide settings
     currentView = 'boards';
@@ -63,8 +79,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // No reset here, as it should retain the board's background
     if (apiKeySection) apiKeySection.style.display = 'none';
     if (trelloBoardsContainer) trelloBoardsContainer.style.display = 'none';
+    if (cardDetailContainer) cardDetailContainer.style.display = 'none';
     if (trelloListsContainer) trelloListsContainer.style.display = 'block';
     if (settingsContainer) settingsContainer.style.display = 'none'; //explicitly hide settings
+    currentView = 'lists';
+  };
+
+  const showCardDetailSection = () => {
+    if (apiKeySection) apiKeySection.style.display = 'none';
+    if (trelloBoardsContainer) trelloBoardsContainer.style.display = 'none';
+    if (trelloListsContainer) trelloListsContainer.style.display = 'none';
+    if (cardDetailContainer) cardDetailContainer.style.display = 'block';
+    if (settingsContainer) settingsContainer.style.display = 'none';
     currentView = 'lists';
   };
 
@@ -74,6 +100,7 @@ function showSettingsSection() {
   if (apiKeySection) apiKeySection.style.display = 'none';
   if (trelloBoardsContainer) trelloBoardsContainer.style.display = 'none';
   if (trelloListsContainer) trelloListsContainer.style.display = 'none';
+  if (cardDetailContainer) cardDetailContainer.style.display = 'none';
   console.log('Popup: settingsContainer element:', settingsContainer); // Diagnostic log
   if (settingsContainer) settingsContainer.style.display = 'block';
   // No change to currentView here, as we want to return to the previous view
@@ -126,13 +153,14 @@ function showSettingsSection() {
             }
 
             // Open board URL on click
-            boardBlock.addEventListener('click', () => {
-              // Instead of opening the URL, show the lists for this board
-              fetchAndDisplayTrelloLists(board.id, board.name, board.prefs);
-            });
+            boardBlock.addEventListener('click', () => fetchAndDisplayTrelloLists(board.id, board.name, board.prefs));
 
             boardsGrid.appendChild(boardBlock);
           });
+        } else {
+          // Handle case where boardsGrid is null
+          setStatus('Error: Boards grid element not found.', true);
+          console.error('Popup: boardsGrid element not found.');
         }
       } else {
         setStatus(`Error fetching boards: ${boardsResponse.error || 'Unknown error'}`, true);
@@ -268,6 +296,116 @@ function showSettingsSection() {
     }
   };
 
+  // Function to fetch and display Trello card details
+  const fetchAndDisplayCardDetails = async (cardId, cardName, boardPrefs) => {
+    setStatus(`Fetching details for "${cardName}"...`, false);
+    applyBoardBackground(boardPrefs); // Apply board background to card detail view
+    try {
+      const tokenResult = await chrome.storage.local.get(['trello_token']);
+      const token = tokenResult.trello_token;
+
+      if (!token) {
+        setStatus('Trello token not found. Please re-authenticate.', true);
+        showApiKeySection();
+        return;
+      }
+
+      const cardResponse = await chrome.runtime.sendMessage({ action: 'get-card-details', token: token, cardId: cardId });
+
+      if (cardResponse && cardResponse.success && cardResponse.data) {
+        showCardDetailSection();
+        const card = cardResponse.data;
+
+        // Set dataset attributes for the card being displayed
+        if (cardDetailContainer) {
+          cardDetailContainer.dataset.cardId = card.id;
+          cardDetailContainer.dataset.cardName = card.name; // Also store name for convenience
+        }
+        if (cardDetailTitle) cardDetailTitle.textContent = card.name;
+
+        if (cardDetailDescription) {
+          cardDetailDescription.value = card.desc || '';
+          cardDetailDescription.readOnly = true;
+          cardDetailDescription.style.height = 'auto'; // Reset height
+          cardDetailDescription.style.height = cardDetailDescription.scrollHeight + 'px'; // Adjust height to content
+        }
+        if (editDescriptionBtn) editDescriptionBtn.style.display = 'inline-block';
+        if (saveDescriptionBtn) saveDescriptionBtn.style.display = 'none';
+
+        if (cardDetailDueDate) {
+          cardDetailDueDate.textContent = card.due ? `Due: ${new Date(card.due).toLocaleDateString()}` : 'No due date';
+        }
+
+        // Display Labels
+        if (cardDetailLabels) {
+          cardDetailLabels.innerHTML = '';
+          if (card.labels && card.labels.length > 0) {
+            card.labels.forEach(label => {
+              const labelSpan = document.createElement('span');
+              labelSpan.classList.add('trello-label');
+              labelSpan.style.backgroundColor = label.color || '#ccc'; // Default color if none
+              labelSpan.textContent = label.name || label.color;
+              cardDetailLabels.appendChild(labelSpan);
+            });
+          } else {
+            cardDetailLabels.textContent = 'No labels';
+          }
+        }
+
+        // Display Checklists
+        if (cardDetailChecklists) {
+          cardDetailChecklists.innerHTML = '';
+          if (card.checklists && card.checklists.length > 0) {
+            card.checklists.forEach(checklist => {
+              const checklistDiv = document.createElement('div');
+              checklistDiv.classList.add('trello-checklist');
+              const checklistTitle = document.createElement('h4');
+              checklistTitle.textContent = checklist.name;
+              checklistDiv.appendChild(checklistTitle);
+              const checklistItems = document.createElement('ul');
+              checklist.checkItems.forEach(item => {
+                const listItem = document.createElement('li');
+                listItem.textContent = item.name;
+                if (item.state === 'complete') {
+                  listItem.style.textDecoration = 'line-through';
+                  listItem.style.opacity = '0.7';
+                }
+                checklistItems.appendChild(listItem);
+              });
+              checklistDiv.appendChild(checklistItems);
+              cardDetailChecklists.appendChild(checklistDiv);
+            });
+          } else {
+            cardDetailChecklists.textContent = 'No checklists';
+          }
+        }
+
+        // Display Comments
+        if (cardDetailComments) {
+          cardDetailComments.innerHTML = '';
+          if (card.actions && card.actions.length > 0) {
+            card.actions.filter(action => action.type === 'commentCard').forEach(comment => {
+              const commentDiv = document.createElement('div');
+              commentDiv.classList.add('trello-comment');
+              commentDiv.innerHTML = `<strong>${comment.memberCreator ? comment.memberCreator.fullName : 'Unknown'}:</strong> ${comment.data.text} <br> <small>${new Date(comment.date).toLocaleString()}</small>`;
+              cardDetailComments.appendChild(commentDiv);
+            });
+          } else {
+            cardDetailComments.textContent = 'No comments';
+          }
+        }
+
+        setStatus(`Details loaded for "${cardName}".`, false);
+      } else {
+        setStatus(`Error fetching card details: ${cardResponse.error || 'Unknown error'}`, true);
+        // Optionally go back to lists or boards
+      }
+    } catch (error) {
+      setStatus(`Communication error during card detail fetch: ${error.message}`, true);
+      console.error('Popup: Error during card detail fetch:', error);
+    }
+  };
+
   // Function to fetch and display Trello lists for a specific board
   const fetchAndDisplayTrelloLists = async (boardId, boardName, boardPrefs) => {
     setStatus(`Fetching lists for "${boardName}"...`, false);
@@ -335,15 +473,20 @@ function showSettingsSection() {
                 cardBlock.classList.add('trello-card');
                 cardBlock.setAttribute('draggable', 'true');
                 cardBlock.dataset.cardId = card.id; // Store card ID for drag and drop
-                cardBlock.addEventListener('dragstart', (e) => { // Drag a card - set data
+                cardBlock.dataset.cardName = card.name; // Store card name for display
+                cardBlock.addEventListener('dragstart', (e) => {
                   e.dataTransfer.setData('text/plain', card.id);
                 });
-
+                // Removed cardBlock's click listener as it's now handled by cardLink
                 const cardLink = document.createElement('a');
-                cardLink.href = card.url;
-                cardLink.target = '_blank';
+                cardLink.href = '#'; // Prevent actual navigation, will be handled by JS
+                // Removed target="_blank" to prevent opening a new tab
                 cardLink.rel = 'noopener noreferrer';
                 cardLink.textContent = card.name;
+                cardLink.addEventListener('click', (e) => {
+                  e.preventDefault(); // Prevent the default link behavior (opening new tab or navigating)
+                  fetchAndDisplayCardDetails(card.id, card.name, boardPrefs); // Call the function to show card details
+                });
                 cardBlock.appendChild(cardLink);
 
                 const deleteButton = document.createElement('button');
@@ -403,6 +546,74 @@ function showSettingsSection() {
     }
   };
 
+  // Function to handle updating card description
+  const handleUpdateCardDescription = async (cardId, newDescription) => {
+    setStatus('Updating description...', false);
+    try {
+      const tokenResult = await chrome.storage.local.get(['trello_token']);
+      const token = tokenResult.trello_token;
+      if (!token) {
+        setStatus('Trello token not found. Please re-authenticate.', true);
+        showApiKeySection();
+        return;
+      }
+      const response = await chrome.runtime.sendMessage({ action: 'update-card-description', token: token, cardId: cardId, description: newDescription });
+      if (response && response.success) {
+        setStatus('Description updated successfully!', false);
+        // Re-fetch card details to update the UI
+        const currentCardId = cardDetailContainer.dataset.cardId;
+        const currentCardName = cardDetailContainer.dataset.cardName;
+        const currentBoardPrefs = JSON.parse(trelloListsContainer.dataset.boardPrefs || '{}'); // Get board prefs from lists container
+        if (currentCardId && currentCardName) {
+          fetchAndDisplayCardDetails(currentCardId, currentCardName, currentBoardPrefs);
+        }
+      } else {
+        setStatus(`Error updating description: ${response.error || 'Unknown error'}`, true);
+      }
+    } catch (error) {
+      setStatus(`Communication error: ${error.message}`, true);
+      console.error('Popup: Error updating description:', error);
+    }
+  };
+
+  // Function to handle adding a comment
+  const handleAddComment = async (cardId, commentText) => {
+    if (!commentText.trim()) {
+      setStatus('Comment cannot be empty!', true);
+      return;
+    }
+    setStatus('Adding comment...', false);
+    try {
+      const tokenResult = await chrome.storage.local.get(['trello_token']);
+      const token = tokenResult.trello_token;
+      if (!token) {
+        setStatus('Trello token not found. Please re-authenticate.', true);
+        showApiKeySection();
+        return;
+      }
+      const response = await chrome.runtime.sendMessage({ action: 'add-comment', token: token, cardId: cardId, commentText: commentText });
+      if (response && response.success) {
+        setStatus('Comment added successfully!', false);
+        if (newCommentInput) newCommentInput.value = ''; // Clear input
+        // Re-fetch card details to update the UI
+        const currentCardId = cardDetailContainer.dataset.cardId;
+        const currentCardName = cardDetailContainer.dataset.cardName;
+        const currentBoardPrefs = JSON.parse(trelloListsContainer.dataset.boardPrefs || '{}'); // Get board prefs from lists container
+        if (currentCardId && currentCardName) {
+          fetchAndDisplayCardDetails(currentCardId, currentCardName, currentBoardPrefs);
+        }
+      } else {
+        setStatus(`Error adding comment: ${response.error || 'Unknown error'}`, true);
+      }
+    } catch (error) {
+      setStatus(`Communication error: ${error.message}`, true);
+      console.error('Popup: Error adding comment:', error);
+    }
+  };
+
+
+
+
   // Function to apply theme
   const applyTheme = (theme) => {
     document.body.dataset.theme = theme;
@@ -432,7 +643,16 @@ function showSettingsSection() {
       trelloListsContainer: trelloListsContainer,
       selectedBoardTitle: selectedBoardTitle,
       listsGrid: listsGrid,
+      cardDetailContainer: cardDetailContainer,
+      cardDetailTitle: cardDetailTitle,
+      cardDetailDescription: cardDetailDescription,
+      cardDetailDueDate: cardDetailDueDate,
+      cardDetailLabels: cardDetailLabels,
+      cardDetailChecklists: cardDetailChecklists,
+      cardDetailComments: cardDetailComments,
+      backToListsBtn: backToListsBtn,
       settingsBtn: settingsBtn,
+      editDescriptionBtn: editDescriptionBtn,
       settingsBtnLists: settingsBtnLists,
       settingsContainer: settingsContainer,
       lightModeBtn: lightModeBtn,
@@ -457,6 +677,7 @@ function showSettingsSection() {
       setStatus('Please enter your Trello API Key.', false);
     }
     // Ensure settingsContainer is hidden on initial load
+    if (cardDetailContainer) cardDetailContainer.style.display = 'none';
     if (settingsContainer) settingsContainer.style.display = 'none';
   });
 
@@ -495,6 +716,37 @@ function showSettingsSection() {
       showBoardsSection();
       setStatus('Viewing Trello boards.', false);
     });
+  }
+
+  // Event listener for "Back to Lists" button
+  if (backToListsBtn) {
+    backToListsBtn.addEventListener('click', () => {
+      showListsSection();
+      // Re-apply background for lists view after returning from card details
+      if (trelloListsContainer.dataset.boardPrefs) {
+        applyBoardBackground(JSON.parse(trelloListsContainer.dataset.boardPrefs));
+      }
+      setStatus('Viewing Trello lists.', false);
+    });
+  }
+
+  // Event listeners for card detail actions
+  if (editDescriptionBtn && cardDetailDescription && saveDescriptionBtn) {
+    editDescriptionBtn.addEventListener('click', () => {
+      cardDetailDescription.readOnly = false;
+      editDescriptionBtn.style.display = 'none';
+      saveDescriptionBtn.style.display = 'inline-block';
+      cardDetailDescription.focus();
+    });
+    saveDescriptionBtn.addEventListener('click', () => {
+      const currentCardId = cardDetailContainer.dataset.cardId;
+      if (currentCardId) {
+        handleUpdateCardDescription(currentCardId, cardDetailDescription.value);
+      }
+    });
+  }
+  if (addCommentBtn && newCommentInput && cardDetailContainer) {
+    addCommentBtn.addEventListener('click', () => handleAddComment(cardDetailContainer.dataset.cardId, newCommentInput.value));
   }
 
   // Event listeners for settings buttons

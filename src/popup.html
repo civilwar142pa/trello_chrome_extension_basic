@@ -321,6 +321,31 @@
                 <!-- Trello lists will be rendered here -->
             </div>
         </div>
+        <!-- Card Detail View -->
+        <div id="cardDetailContainer" style="display: none;">
+            <button id="backToListsBtn" class="back-btn">← Back to Lists</button>
+            <h3 id="cardDetailTitle"></h3>
+            
+            <h4>Description</h4>
+            <textarea id="cardDetailDescription" rows="5" readonly></textarea>
+            <button id="editDescriptionBtn" class="action-btn">Edit Description</button>
+            <button id="saveDescriptionBtn" class="action-btn" style="display: none;">Save Description</button>
+
+            <p id="cardDetailDueDate"></p>
+
+            <h4>Labels</h4>
+            <div id="cardDetailLabels" class="labels-container"></div>
+
+            <h4>Checklists</h4>
+            <div id="cardDetailChecklists" class="checklists-container"></div>
+
+            <h4>Comments</h4>
+            <div id="cardDetailComments" class="comments-container"></div>
+            <div class="add-comment-section">
+                <textarea id="newCommentInput" placeholder="Write a comment..." rows="2"></textarea>
+                <button id="addCommentBtn" class="action-btn">Add Comment</button>
+            </div>
+        </div>
         <div id="settingsContainer" style="display: none; padding: 10px; text-align: center;">
             <h2>Settings</h2>
             <p>Choose Theme:</p>

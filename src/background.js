@@ -145,5 +145,59 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       .then((data) => sendResponse({ success: true, data }))
       .catch((error) => sendResponse({ success: false, error: error.message }));
     return true;
+  } else if (request.action === 'get-card-details') {
+    const { token, cardId } = request;
+    getApiKey().then((apiKey) => {
+      // Requesting name, description, due date, labels, checklists, and comments
+      const url = `https://api.trello.com/1/cards/${cardId}?key=${apiKey}&token=${token}&fields=name,desc,due,idLabels,idChecklists,badges,url&actions=commentCard&action_fields=data,date,memberCreator&checklists=all`;
+      return fetch(url);
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to fetch card details: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+        return response.json();
+      })
+      .then((data) => sendResponse({ success: true, data }))
+      .catch((error) => sendResponse({ success: false, error: error.message }));
+    return true;
+  } else if (request.action === 'update-card-description') {
+    const { token, cardId, description } = request;
+    getApiKey().then((apiKey) => {
+      const url = `https://api.trello.com/1/cards/${cardId}?key=${apiKey}&token=${token}&desc=${encodeURIComponent(description)}`;
+      return fetch(url, { method: 'PUT' });
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to update card description: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+        return response.json();
+      })
+      .then((data) => sendResponse({ success: true, data }))
+      .catch((error) => sendResponse({ success: false, error: error.message }));
+    return true;
+  } else if (request.action === 'add-comment') {
+    const { token, cardId, commentText } = request;
+    getApiKey().then((apiKey) => {
+      const url = `https://api.trello.com/1/cards/${cardId}/actions/comments?key=${apiKey}&token=${token}&text=${encodeURIComponent(commentText)}`;
+      return fetch(url, { method: 'POST' });
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to add comment: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+        return response.json();
+      })
+      .then((data) => sendResponse({ success: true, data }))
+      .catch((error) => sendResponse({ success: false, error: error.message }));
+    return true;
+  } else if (request.action === 'get-labels') {
+    // Placeholder for future label fetching if needed
+    // For now, card details include idLabels, which can be used to get label names/colors from board data
+    sendResponse({ success: false, error: 'Not implemented yet' });
+    return true;
   }
 });
