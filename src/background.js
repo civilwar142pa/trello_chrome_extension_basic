@@ -199,5 +199,39 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // For now, card details include idLabels, which can be used to get label names/colors from board data
     sendResponse({ success: false, error: 'Not implemented yet' });
     return true;
+  } else if (request.action === 'update-card-duedate') {
+    const { token, cardId, dueDate } = request;
+    getApiKey().then((apiKey) => {
+      // Trello API expects 'null' to clear the due date
+      const dueParam = dueDate === null ? 'null' : encodeURIComponent(dueDate);
+      const url = `https://api.trello.com/1/cards/${cardId}?key=${apiKey}&token=${token}&due=${dueParam}`;
+      return fetch(url, { method: 'PUT' });
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to update card due date: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+        return response.json();
+      })
+      .then((data) => sendResponse({ success: true, data }))
+      .catch((error) => sendResponse({ success: false, error: error.message }));
+    return true;
+  } else if (request.action === 'add-checklist') {
+    const { token, cardId, name } = request;
+    getApiKey().then((apiKey) => {
+      const url = `https://api.trello.com/1/cards/${cardId}/checklists?key=${apiKey}&token=${token}&name=${encodeURIComponent(name)}`;
+      return fetch(url, { method: 'POST' });
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to add checklist: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+        return response.json();
+      })
+      .then((data) => sendResponse({ success: true, data }))
+      .catch((error) => sendResponse({ success: false, error: error.message }));
+    return true;
   }
 });

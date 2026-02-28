@@ -299,7 +299,7 @@
             padding: 10px;
         }
     </style>
-  <script type="module" crossorigin src="/assets/popup-DA2UzHIy.js"></script>
+  <script type="module" crossorigin src="/assets/popup-B710ewSu.js"></script>
 </head>
 <body>
     <div id="mainContainer">
@@ -332,10 +332,15 @@
             <button id="editDescriptionBtn" class="action-btn">Edit Description</button>
             <button id="saveDescriptionBtn" class="action-btn" style="display: none;">Save Description</button>
 
-            <p id="cardDetailDueDate"></p>
+            <h4>Due Date</h4>
+            <input type="date" id="cardDetailDueDateInput">
+            <button id="saveDueDateBtn" class="action-btn">Save Due Date</button>
+            <button id="clearDueDateBtn" class="action-btn">Clear Due Date</button>
 
             <h4>Labels</h4>
             <div id="cardDetailLabels" class="labels-container"></div>
+
+            <!-- Existing Checklists will be displayed here -->
 
             <h4>Checklists</h4>
             <div id="cardDetailChecklists" class="checklists-container"></div>
@@ -346,6 +351,11 @@
                 <textarea id="newCommentInput" placeholder="Write a comment..." rows="2"></textarea>
                 <button id="addCommentBtn" class="action-btn">Add Comment</button>
             </div>
+            <div class="add-checklist-section">
+                <input type="text" id="newChecklistNameInput" placeholder="New checklist title...">
+                <button id="addChecklistBtn" class="action-btn">Add Checklist</button>
+            </div>
+
         </div>
         <div id="settingsContainer" style="display: none; padding: 10px; text-align: center;">
             <h2>Settings</h2>

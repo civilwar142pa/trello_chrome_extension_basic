@@ -16,8 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const cardDetailContainer = document.getElementById('cardDetailContainer');
   const cardDetailTitle = document.getElementById('cardDetailTitle');
   const cardDetailDescription = document.getElementById('cardDetailDescription');
-  const cardDetailDueDate = document.getElementById('cardDetailDueDate');
-  const cardDetailLabels = document.getElementById('cardDetailLabels');
+  const cardDetailDueDateInput = document.getElementById('cardDetailDueDateInput');
+  const saveDueDateBtn = document.getElementById('saveDueDateBtn');
+  const clearDueDateBtn = document.getElementById('clearDueDateBtn');
+
   const cardDetailChecklists = document.getElementById('cardDetailChecklists');
   const cardDetailComments = document.getElementById('cardDetailComments');
   const backToListsBtn = document.getElementById('backToListsBtn');
@@ -25,6 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const saveDescriptionBtn = document.getElementById('saveDescriptionBtn');
   const newCommentInput = document.getElementById('newCommentInput');
   const addCommentBtn = document.getElementById('addCommentBtn');
+  const newChecklistNameInput = document.getElementById('newChecklistNameInput');
+  const addChecklistBtn = document.getElementById('addChecklistBtn');
 
   // New elements for settings
   const settingsBtn = document.getElementById('settingsBtn');
@@ -332,8 +336,12 @@ function showSettingsSection() {
         if (editDescriptionBtn) editDescriptionBtn.style.display = 'inline-block';
         if (saveDescriptionBtn) saveDescriptionBtn.style.display = 'none';
 
-        if (cardDetailDueDate) {
-          cardDetailDueDate.textContent = card.due ? `Due: ${new Date(card.due).toLocaleDateString()}` : 'No due date';
+        // Due Date Input
+        if (cardDetailDueDateInput) {
+          // Trello's 'due' can be null or a date string. Input type="date" expects 'YYYY-MM-DD'.
+          cardDetailDueDateInput.value = card.due ? new Date(card.due).toISOString().split('T')[0] : '';
+          if (saveDueDateBtn) saveDueDateBtn.style.display = 'inline-block';
+          if (clearDueDateBtn) clearDueDateBtn.style.display = 'inline-block';
         }
 
         // Display Labels
@@ -547,7 +555,7 @@ function showSettingsSection() {
   };
 
   // Function to handle updating card description
-  const handleUpdateCardDescription = async (cardId, newDescription) => {
+  const handleUpdateCardDescription = async (cardId, description) => {
     setStatus('Updating description...', false);
     try {
       const tokenResult = await chrome.storage.local.get(['trello_token']);
@@ -557,7 +565,7 @@ function showSettingsSection() {
         showApiKeySection();
         return;
       }
-      const response = await chrome.runtime.sendMessage({ action: 'update-card-description', token: token, cardId: cardId, description: newDescription });
+      const response = await chrome.runtime.sendMessage({ action: 'update-card-description', token: token, cardId: cardId, description: description });
       if (response && response.success) {
         setStatus('Description updated successfully!', false);
         // Re-fetch card details to update the UI
@@ -573,6 +581,76 @@ function showSettingsSection() {
     } catch (error) {
       setStatus(`Communication error: ${error.message}`, true);
       console.error('Popup: Error updating description:', error);
+    }
+  };
+
+  // Function to handle updating card due date
+  const handleUpdateCardDueDate = async (cardId, dueDateString) => {
+    setStatus('Updating due date...', false);
+    try {
+      const tokenResult = await chrome.storage.local.get(['trello_token']);
+      const token = tokenResult.trello_token;
+      if (!token) {
+        setStatus('Trello token not found. Please re-authenticate.', true);
+        showApiKeySection();
+        return;
+      }
+
+      let formattedDueDate = null;
+      if (dueDateString) {
+        // Convert YYYY-MM-DD from input to ISO string for Trello API
+        formattedDueDate = new Date(dueDateString).toISOString();
+      }
+      const response = await chrome.runtime.sendMessage({ action: 'update-card-duedate', token: token, cardId: cardId, dueDate: formattedDueDate });
+      if (response && response.success) {
+        setStatus('Due date updated successfully!', false);
+        const currentCardId = cardDetailContainer.dataset.cardId;
+        const currentCardName = cardDetailContainer.dataset.cardName;
+        const currentBoardPrefs = JSON.parse(trelloListsContainer.dataset.boardPrefs || '{}');
+        if (currentCardId && currentCardName) {
+          fetchAndDisplayCardDetails(currentCardId, currentCardName, currentBoardPrefs);
+        }
+      } else {
+        setStatus(`Error updating due date: ${response.error || 'Unknown error'}`, true);
+      }
+    } catch (error) {
+      setStatus(`Communication error: ${error.message}`, true);
+      console.error('Popup: Error updating due date:', error);
+    }
+  };
+
+  // Function to handle adding a new checklist
+  const handleAddChecklist = async (cardId, checklistName) => {
+    if (!checklistName.trim()) {
+      setStatus('Checklist name cannot be empty!', true);
+      return;
+    }
+    setStatus('Adding checklist...', false);
+    try {
+      const tokenResult = await chrome.storage.local.get(['trello_token']);
+      const token = tokenResult.trello_token;
+      if (!token) {
+        setStatus('Trello token not found. Please re-authenticate.', true);
+        showApiKeySection();
+        return;
+      }
+      const response = await chrome.runtime.sendMessage({ action: 'add-checklist', token: token, cardId: cardId, name: checklistName });
+      if (response && response.success) {
+        setStatus('Checklist added successfully!', false);
+        if (newChecklistNameInput) newChecklistNameInput.value = ''; // Clear input
+        // Re-fetch card details to update the UI
+        const currentCardId = cardDetailContainer.dataset.cardId;
+        const currentCardName = cardDetailContainer.dataset.cardName;
+        const currentBoardPrefs = JSON.parse(trelloListsContainer.dataset.boardPrefs || '{}');
+        if (currentCardId && currentCardName) {
+          fetchAndDisplayCardDetails(currentCardId, currentCardName, currentBoardPrefs);
+        }
+      } else {
+        setStatus(`Error adding checklist: ${response.error || 'Unknown error'}`, true);
+      }
+    } catch (error) {
+      setStatus(`Communication error: ${error.message}`, true);
+      console.error('Popup: Error adding checklist:', error);
     }
   };
 
@@ -646,8 +724,10 @@ function showSettingsSection() {
       cardDetailContainer: cardDetailContainer,
       cardDetailTitle: cardDetailTitle,
       cardDetailDescription: cardDetailDescription,
-      cardDetailDueDate: cardDetailDueDate,
+      cardDetailDueDateInput: cardDetailDueDateInput, 
       cardDetailLabels: cardDetailLabels,
+      saveDueDateBtn: saveDueDateBtn,
+      clearDueDateBtn: clearDueDateBtn,
       cardDetailChecklists: cardDetailChecklists,
       cardDetailComments: cardDetailComments,
       backToListsBtn: backToListsBtn,
@@ -747,6 +827,29 @@ function showSettingsSection() {
   }
   if (addCommentBtn && newCommentInput && cardDetailContainer) {
     addCommentBtn.addEventListener('click', () => handleAddComment(cardDetailContainer.dataset.cardId, newCommentInput.value));
+  }
+
+  // Event listeners for due date actions
+  if (saveDueDateBtn && cardDetailDueDateInput && cardDetailContainer) {
+    saveDueDateBtn.addEventListener('click', () => {
+      const currentCardId = cardDetailContainer.dataset.cardId;
+      if (currentCardId) {
+        handleUpdateCardDueDate(currentCardId, cardDetailDueDateInput.value); // Pass the raw input value
+      }
+    });
+  }
+  if (clearDueDateBtn && cardDetailContainer) {
+    clearDueDateBtn.addEventListener('click', () => {
+      const currentCardId = cardDetailContainer.dataset.cardId;
+      if (currentCardId) {
+        handleUpdateCardDueDate(currentCardId, null); // Pass null to clear due date
+      }
+    });
+  }
+
+  // Event listener for adding a checklist
+  if (addChecklistBtn && newChecklistNameInput && cardDetailContainer) {
+    addChecklistBtn.addEventListener('click', () => handleAddChecklist(cardDetailContainer.dataset.cardId, newChecklistNameInput.value));
   }
 
   // Event listeners for settings buttons

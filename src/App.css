@@ -192,12 +192,6 @@ body {
     background-color: var(--btn-hover-bg);
 }
 
-#cardDetailDueDate {
-    font-size: 0.9rem;
-    margin-bottom: 10px;
-    color: var(--text-color);
-}
-
 .labels-container {
     display: flex;
     flex-wrap: wrap;
@@ -283,6 +277,24 @@ body {
     font-size: 1em;
     width: auto;
     text-align: left;
+}
+
+.add-checklist-section {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+#newChecklistNameInput {
+    width: calc(100% - 20px);
+    padding: 8px;
+    border: 1px solid var(--input-border);
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    resize: vertical;
+    box-sizing: border-box;
 }
 
 .back-btn:hover {
