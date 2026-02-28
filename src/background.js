@@ -21,42 +21,52 @@ const getApiKey = () => {
 
 // Trello authentication
 const authenticateTrello = () => {
-  return getApiKey().then((apiKey) => new Promise((resolve, reject) => {
-    const redirectURL = chrome.identity.getRedirectURL();
-    console.log('Background: Using API Key:', apiKey);
-    console.log('Background: Generated Redirect URL:', redirectURL);
-    const authURL = `https://trello.com/1/authorize?expiration=never&name=TrelloReactBooster&scope=read,write&response_type=token&key=${apiKey}&return_url=${encodeURIComponent(redirectURL)}`;
+  return new Promise((resolve, reject) => {
+    chrome.storage.local.get(['trello_token'], (result) => {
+      if (result.trello_token) {
+        console.log('Background: Existing Trello token found in storage. Reusing it.');
+        resolve(result.trello_token);
+      } else {
+        console.log('Background: No existing Trello token found. Initiating new authentication flow.');
+        getApiKey().then((apiKey) => {
+          const redirectURL = chrome.identity.getRedirectURL();
+          console.log('Background: Using API Key:', apiKey);
+          console.log('Background: Generated Redirect URL:', redirectURL);
+          const authURL = `https://trello.com/1/authorize?expiration=never&name=TrelloReactBooster&scope=read,write&response_type=token&key=${apiKey}&return_url=${encodeURIComponent(redirectURL)}`;
 
-    console.log('Background: Launching web auth flow with URL:', authURL);
-    chrome.identity.launchWebAuthFlow(
-      {
-        url: authURL,
-        interactive: true,
-      },
-      (responseUrl) => {
-        if (chrome.runtime.lastError || !responseUrl) {
-          const error = chrome.runtime.lastError ? chrome.runtime.lastError.message : 'Web auth flow completed without a response URL.';
-          console.error('Background: chrome.identity.launchWebAuthFlow error:', error);
-          reject(new Error(error));
-          return;
-        }
-        // Extract token from URL hash
-        const url = new URL(responseUrl);
-        const params = new URLSearchParams(url.hash.substring(1)); // removes '#'
-        const token = params.get('token');
-        
-        if (token) {
-          chrome.storage.local.set({ trello_token: token }, () => { //
-            console.log('Background: Trello token saved successfully.');
-            resolve(token);
-          });
-        } else {
-          console.error('Background: No token found in response URL:', responseUrl);
-          reject(new Error('No token found in response.'));
-        }
+          console.log('Background: Launching web auth flow with URL:', authURL);
+          chrome.identity.launchWebAuthFlow(
+            {
+              url: authURL,
+              interactive: true,
+            },
+            (responseUrl) => {
+              if (chrome.runtime.lastError || !responseUrl) {
+                const error = chrome.runtime.lastError ? chrome.runtime.lastError.message : 'Web auth flow completed without a response URL.';
+                console.error('Background: chrome.identity.launchWebAuthFlow error:', error);
+                reject(new Error(error));
+                return;
+              }
+              // Extract token from URL hash
+              const url = new URL(responseUrl);
+              const params = new URLSearchParams(url.hash.substring(1)); // removes '#'
+              const token = params.get('token');
+              
+              if (token) {
+                chrome.storage.local.set({ trello_token: token }, () => {
+                  console.log('Background: Trello token saved successfully.');
+                  resolve(token);
+                });
+              } else {
+                console.error('Background: No token found in response URL:', responseUrl);
+                reject(new Error('No token found in response.'));
+              }
+            }
+          );
+        }).catch(reject); // Catch errors from getApiKey
       }
-    );
-  }));
+    });
+  });
 };
 
 // Listen for a message to trigger auth 
